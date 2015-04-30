@@ -147,7 +147,7 @@ float           YRangeDiv2, YRangeDivPI;
 float           *SinIterPhi;
 
 
-void main(int argc, char **argv)
+void genworld(int argc, char **argv)
 {
 	int       NumberOfFaults = 0, a, j, i, Color, MaxZ = 1, MinZ = -1;
 	int       row, TwoColorMode = 0;
