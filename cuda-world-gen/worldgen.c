@@ -68,9 +68,12 @@
 #include    <stdio.h>
 #include    <stdlib.h>
 //#include    <unistd.h>
-#include    <time.h>
+//#include    <sys/time.h>
+#include <Windows.h>
 #include    <string.h>
 #include    <math.h>
+
+#include "stats.h"
 
 
 /* These define:s are for the GIF-saver... */
@@ -176,6 +179,7 @@ void genworld(int argc, char **argv)
 		SinIterPhi[i] = SinIterPhi[i + XRange] = (float)sin(i * 2 * PI / XRange);
 	}
 
+	/*
 	fprintf(stderr, "Seed: ");
 	scanf("%d", &Seed);
 	fprintf(stderr, "Number of faults: ");
@@ -187,6 +191,13 @@ void genworld(int argc, char **argv)
 
 	fprintf(stderr, "Save as (.GIF will be appended): ");
 	scanf("%8s", SaveName);
+	*/
+
+	Seed = 12345;
+	NumberOfFaults = 2000;
+	PercentWater = 60;
+	PercentIce = 10;
+	strcpy(SaveName, "default");
 
 	srand(Seed);
 
@@ -237,6 +248,10 @@ void genworld(int argc, char **argv)
 		}
 		row += YRange;
 	}
+
+	// Time coloring
+	LARGE_INTEGER seq_color_start, seq_color_end;
+	QueryPerformanceCounter(&seq_color_start);
 
 	/* Compute MAX and MIN values in WorldMapArray */
 	for (j = 0; j<XRange*YRange; j++)
@@ -353,6 +368,14 @@ void genworld(int argc, char **argv)
 	Finished:;
 	}
 
+	// Finish timing coloring
+	QueryPerformanceCounter(&seq_color_end);
+	seq_color_usec += get_elapsed_usec(seq_color_start, seq_color_end);
+
+	// Start timing save to gif
+	LARGE_INTEGER seq_gif_start, seq_gif_end;
+	QueryPerformanceCounter(&seq_gif_start);
+
 	/* append .gif to SaveFile */
 	sprintf(SaveFile, "%s.gif", SaveName);
 	/* open binary SaveFile */
@@ -361,11 +384,16 @@ void genworld(int argc, char **argv)
 
 	GIFEncode(Save, XRange, YRange, 1, 0, 8, Red, Green, Blue);
 
+	// Finish timing save to gif
+	QueryPerformanceCounter(&seq_gif_end);
+	seq_gif_usec += get_elapsed_usec(seq_gif_start, seq_gif_end);
+
 	fprintf(stderr, "Map created, saved as %s.\n", SaveFile);
 
 	free(WorldMapArray);
 
-	exit(0);
+	//exit(0);
+	return;
 }
 
 void FloodFill4(int x, int y, int OldColor)
@@ -411,15 +439,29 @@ void GenerateWorldMap()
 	*
 	* So I can't optimize this, but you might if you don't have the
 	* same bug... */
+
+	// Begin RNG timing
+	LARGE_INTEGER rng_start_time, rng_end_time;
+	QueryPerformanceCounter(&rng_start_time);
+
 	flag1 = rand() & 1; /*(int)((((float) rand())/MAX_RAND) + 0.5);*/
 
 	/* Create a random greatcircle...
 	* Start with an equator and rotate it */
+
 	Alpha = (((float)rand()) / MAX_RAND - 0.5)*PI; /* Rotate around x-axis */
 	Beta = (((float)rand()) / MAX_RAND - 0.5)*PI; /* Rotate around y-axis */
 
-	TanB = tan(acos(cos(Alpha)*cos(Beta)));
+	// End RNG timing
+	QueryPerformanceCounter(&rng_end_time);
+	seq_rng_usec += get_elapsed_usec(rng_start_time, rng_end_time);
 
+
+	// Begin comp timing
+	LARGE_INTEGER comp_start_time, comp_end_time;
+	QueryPerformanceCounter(&comp_start_time);
+
+	TanB = tan(acos(cos(Alpha)*cos(Beta)));
 	row = 0;
 	Xsi = (int)(XRange / 2 - (XRange / PI)*Beta);
 
@@ -445,6 +487,11 @@ void GenerateWorldMap()
 		}
 		row += YRange;
 	}
+
+	// End comp time
+	QueryPerformanceCounter(&comp_end_time);
+	seq_comp_usec += get_elapsed_usec(comp_start_time, comp_end_time);
+
 }
 
 

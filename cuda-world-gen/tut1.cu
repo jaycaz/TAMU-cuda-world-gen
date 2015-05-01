@@ -14,6 +14,7 @@ __global__ void AddIntsCUDA(int *a, int *b)
 	a[0] += b[0];
 }
 
+/*
 int main()
 {
 	int a = 5, b = 9;
@@ -37,3 +38,4 @@ int main()
 
 	return 0;
 }
+*/

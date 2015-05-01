@@ -157,9 +157,11 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.c" />
+    <ClCompile Include="stats.c" />
     <ClCompile Include="worldgen.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="stats.h" />
     <ClInclude Include="worldgen.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
