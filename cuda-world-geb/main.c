@@ -3,8 +3,10 @@
 
 #include "worldgen.h"
 
+/*
 int main(int argc, char **argv)
 {
 	genworld(argc, argv);
 	return 0;
 }
+*/
