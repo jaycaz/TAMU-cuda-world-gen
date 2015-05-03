@@ -156,13 +156,17 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <CudaCompile Include="tut1.cu" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="gifencode.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="stats.c" />
     <ClCompile Include="worldgen.c" />
+    <ClCompile Include="worldgen_seq.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="gifencode.h" />
     <ClInclude Include="stats.h" />
     <ClInclude Include="worldgen.h" />
+    <ClInclude Include="worldgen_seq.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

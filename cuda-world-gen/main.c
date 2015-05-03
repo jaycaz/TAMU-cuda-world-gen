@@ -5,7 +5,7 @@
 #include <Windows.h>
 #include "cuda_runtime.h"
 
-#include "worldgen.h"
+#include "worldgen_seq.h"
 #include "stats.h"
 
 __host__
@@ -15,7 +15,7 @@ int main(int argc, char **argv)
 	QueryPerformanceCounter(&seq_start);
 
 	// Run sequential generation algorithm!
-	genworld(argc, argv);
+	genworld_seq(argc, argv);
 
 	// Get total algorithm time
 	QueryPerformanceCounter(&seq_end);

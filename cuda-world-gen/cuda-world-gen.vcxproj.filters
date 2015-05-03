@@ -21,18 +21,30 @@
     <ClCompile Include="main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="stats.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="worldgen_seq.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="worldgen.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="stats.c">
+    <ClCompile Include="gifencode.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="stats.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="worldgen_seq.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="worldgen.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="stats.h">
+    <ClInclude Include="gifencode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
