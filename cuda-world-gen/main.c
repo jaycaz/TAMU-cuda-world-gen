@@ -3,12 +3,13 @@
 
 //#include <sys/time.h>
 #include <Windows.h>
-#include "cuda_runtime.h"
 
-#include "worldgen_seq.h"
 #include "stats.h"
+#include "worldgen_seq.h"
+//#include "worldgen_pll.cuh"
 
-__host__
+extern void genworld_pll(int argc, char **argv);
+
 int main(int argc, char **argv)
 {
 	LARGE_INTEGER seq_start, seq_end;

@@ -5,6 +5,9 @@
     <CudaCompile Include="tut1.cu">
       <Filter>Tutorial1</Filter>
     </CudaCompile>
+    <CudaCompile Include="worldgen_pll.cu">
+      <Filter>Source Files</Filter>
+    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Tutorial1">
@@ -18,19 +21,19 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="gifencode.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="stats.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="worldgen_seq.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="worldgen.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="gifencode.c">
+    <ClCompile Include="worldgen_seq.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -45,6 +48,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="gifencode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="worldgen_pll.cuh">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

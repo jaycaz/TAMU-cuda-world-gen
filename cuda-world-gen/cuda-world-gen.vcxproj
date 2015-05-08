@@ -154,6 +154,12 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
   <ItemGroup>
     <CudaCompile Include="kernel.cu" />
     <CudaCompile Include="tut1.cu" />
+    <CudaCompile Include="worldgen_pll.cu">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </ExcludedFromBuild>
+      <AdditionalDeps Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </AdditionalDeps>
+    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="gifencode.c" />
@@ -166,6 +172,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     <ClInclude Include="gifencode.h" />
     <ClInclude Include="stats.h" />
     <ClInclude Include="worldgen.h" />
+    <ClInclude Include="worldgen_pll.cuh" />
     <ClInclude Include="worldgen_seq.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

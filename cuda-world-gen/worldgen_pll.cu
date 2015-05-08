@@ -1,76 +1,17 @@
-/*
-* Copyright (C) 1999  John Olsson
-*
-* This program is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program; if not, write to the Free Software
-* Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-*/
+// Jordan Cazamias
+// CUDA World Gen 2015
 
-/* Fractal Worldmap Generator Version 2.2
-*
-* Creator: John Olsson
-* Thanks to Carl Burke for interesting discussions and suggestions of
-* how to speed up the generation! :)
-*
-* This program is provided as is, and it's basically a "hack". So if you
-* want a better userinterface, you will have to provide it by yourself!
-*
-* For ideas about how to implement different projections, you can always
-* look in WorldMapGenerator.c (the CGI program that generates the gifs
-* on my www-page (http://www.lysator.liu.se/~johol/fwmg/fwmg.html).
-*
-* Please visit my WWW-pages located at: http://www.lysator.liu.se/~johol/
-* You can send E-Mail to this adress: johol@lysator.liu.se
-*
-* I compile this program with: gcc -O3 worldgen.c -lm -o gengif
-*
-* This program will write the GIF-file to a file which you are
-* prompted to specify.
-*
-* To change size of the generated picture, change the default values
-* of the variables XRange och YRange.
-*
-* You use this program at your own risk! :)
-*
-*
-* When you run the program you are prompted to input three values:
-*
-* Seed:             This the "seed" used to initialize the random number
-*                   generator. So if you use the same seed, you'll get the
-*                   same sequence of random numbers...
-*
-* Number of faults: This is how many iterations the program will do.
-*                   If you want to know how it works, just enter 1, 2, 3,...
-*                   etc. number of iterations and compare the different
-*                   GIF-files.
-*
-* PercentWater:          This should be a value between 0 and 100 (you can
-*                   input 1000 also, but I don't know what the program
-*                   is up to then! :) The number tells the "ratio"
-*                   between water and land. If you want a world with
-*                   just a few islands, input a large value (EG. 80 or
-*                   above), if you want a world with nearly no oceans,
-*                   a value near 0 would do that.
-*
-*/
+// Parallel implementation of worldgen_seq
 
-#include "worldgen_seq.h"
+extern "C"
+{
+	#include "worldgen_pll.cuh"
+}
 
 /* Function that generates the worldmap */
-void GenerateWorldMap();
+extern "C" void GenerateWorldMapPll();
 
-
-void genworld_seq(int argc, char **argv)
+extern "C" void genworld_pll(int argc, char **argv)
 {
 	int       NumberOfFaults = 0, a, j, i, Color, MaxZ = 1, MinZ = -1;
 	int       row, TwoColorMode = 0;
@@ -135,7 +76,7 @@ void genworld_seq(int argc, char **argv)
 	/* Generate the map! */
 	for (a = 0; a<NumberOfFaults; a++)
 	{
-		GenerateWorldMap();
+		GenerateWorldMapPll();
 	}
 
 	/* Copy data (I have only calculated faults for 1/2 the image.
@@ -316,7 +257,7 @@ void genworld_seq(int argc, char **argv)
 	return;
 }
 
-void GenerateWorldMap()
+extern "C" void GenerateWorldMapPll()
 {
 	float         Alpha, Beta;
 	float         TanB;

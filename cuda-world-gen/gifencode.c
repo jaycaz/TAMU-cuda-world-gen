@@ -3,6 +3,7 @@
 
 #include "gifencode.h"
 
+
 /*****************************************************************************
 *
 * GIFENCODE.C    - GIF Image compression interface

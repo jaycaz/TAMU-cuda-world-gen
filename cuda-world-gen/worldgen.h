@@ -3,16 +3,14 @@
 
 #pragma once
 
-/* These define:s are for the GIF-saver... */
-/* a code_int must be able to hold 2**BITS values of type int, and also -1 */
-typedef int             code_int;
+#include    <limits.h>
+#include    <stdio.h>
+#include    <stdlib.h>
+#include    <Windows.h>
+#include    <math.h>
 
-#ifdef SIGNED_COMPARE_SLOW
-typedef unsigned long int count_int;
-typedef unsigned short int count_short;
-#else /*SIGNED_COMPARE_SLOW*/
-typedef long int          count_int;
-#endif /*SIGNED_COMPARE_SLOW*/
+#include "gifencode.h"
+#include "stats.h"
 
 /* My own definitions */
 
@@ -33,17 +31,16 @@ typedef long int          count_int;
 
 // Global Variables
 int             *WorldMapArray;
-int             XRange;
-int             YRange;
 int             Histogram[256];
 int             FilledPixels;
-int             Red[49];
-int             Green[49];
-int             Blue[49];
 float           YRangeDiv2, YRangeDivPI;
 float           *SinIterPhi;
 
-
+extern int             XRange;
+extern int             YRange;
+extern int             Red[49];
+extern int             Green[49];
+extern int             Blue[49];
 
 /* 4-connective floodfill algorithm which I use for constructing
 *  the ice-caps.*/

@@ -2,6 +2,12 @@
 
 #include "stats.h"
 
+extern long seq_total_usec = 0;
+extern long seq_rng_usec = 0;
+extern long seq_comp_usec = 0;
+extern long seq_color_usec = 0;
+extern long seq_gif_usec = 0;
+
 LONGLONG TICKS_PER_SEC = -1;
 
 long get_elapsed_usec(LARGE_INTEGER start, LARGE_INTEGER end)
