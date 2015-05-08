@@ -3,6 +3,11 @@
 
 #pragma once
 
+#include <math.h>
+#include <Windows.h>
+
+#include "stats.h"
+
 /* These define:s are for the GIF-saver... */
 /* a code_int must be able to hold 2**BITS values of type int, and also -1 */
 typedef int             code_int;
@@ -48,3 +53,4 @@ float           *SinIterPhi;
 /* 4-connective floodfill algorithm which I use for constructing
 *  the ice-caps.*/
 void FloodFill4(int x, int y, int OldColor);
+void GenerateWorldMap();
