@@ -64,11 +64,24 @@
 *
 */
 
-#include "worldgen_seq.h"
+#include    <limits.h>
+#include    <stdio.h>
+#include    <stdlib.h>
+//#include    <unistd.h>
+//#include    <sys/time.h>
+#include <Windows.h>
+#include    <string.h>
+#include    <math.h>
 
-//void GenerateWorldMap();
+#include "gifencode.h"
+#include "worldgen.h"
+#include "stats.h"
 
-// Main sequential world generation algorithm
+
+/* Function that generates the worldmap */
+void GenerateWorldMap();
+
+
 void genworld_seq(int argc, char **argv)
 {
 	int       NumberOfFaults = 0, a, j, i, Color, MaxZ = 1, MinZ = -1;
@@ -315,3 +328,76 @@ void genworld_seq(int argc, char **argv)
 	return;
 }
 
+void GenerateWorldMap()
+{
+	float         Alpha, Beta;
+	float         TanB;
+	float         Result, Delta;
+	int           i, row, N2;
+	int           Theta, Phi, Xsi;
+	unsigned int  flag1;
+
+
+	/* I have to do this because of a bug in rand() in Solaris 1...
+	* Here's what the man-page says:
+	*
+	* "The low bits of the numbers generated are not  very  random;
+	*  use  the  middle  bits.  In particular the lowest bit alter-
+	*  nates between 0 and 1."
+	*
+	* So I can't optimize this, but you might if you don't have the
+	* same bug... */
+
+	// Begin RNG timing
+	LARGE_INTEGER rng_start_time, rng_end_time;
+	QueryPerformanceCounter(&rng_start_time);
+
+	flag1 = rand() & 1; /*(int)((((float) rand())/MAX_RAND) + 0.5);*/
+
+	/* Create a random greatcircle...
+	* Start with an equator and rotate it */
+
+	Alpha = (((float)rand()) / MAX_RAND - 0.5)*PI; /* Rotate around x-axis */
+	Beta = (((float)rand()) / MAX_RAND - 0.5)*PI; /* Rotate around y-axis */
+
+	// End RNG timing
+	QueryPerformanceCounter(&rng_end_time);
+	seq_rng_usec += get_elapsed_usec(rng_start_time, rng_end_time);
+
+
+	// Begin comp timing
+	LARGE_INTEGER comp_start_time, comp_end_time;
+	QueryPerformanceCounter(&comp_start_time);
+
+	TanB = tan(acos(cos(Alpha)*cos(Beta)));
+	row = 0;
+	Xsi = (int)(XRange / 2 - (XRange / PI)*Beta);
+
+	for (Phi = 0; Phi<XRange / 2; Phi++)
+	{
+		Theta = (int)(YRangeDivPI*atan(*(SinIterPhi + Xsi - Phi + XRange)*TanB)) + YRangeDiv2;
+
+		if (flag1)
+		{
+			/* Rise northen hemisphere <=> lower southern */
+			if (WorldMapArray[row + Theta] != INT_MIN)
+				WorldMapArray[row + Theta]--;
+			else
+				WorldMapArray[row + Theta] = -1;
+		}
+		else
+		{
+			/* Rise southern hemisphere */
+			if (WorldMapArray[row + Theta] != INT_MIN)
+				WorldMapArray[row + Theta]++;
+			else
+				WorldMapArray[row + Theta] = 1;
+		}
+		row += YRange;
+	}
+
+	// End comp time
+	QueryPerformanceCounter(&comp_end_time);
+	seq_comp_usec += get_elapsed_usec(comp_start_time, comp_end_time);
+
+}
