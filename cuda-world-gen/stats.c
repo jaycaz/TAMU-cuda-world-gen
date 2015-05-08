@@ -37,6 +37,9 @@ void print_seq_stats()
 	printf("\t- Color time: %ld usec\n", seq_color_usec);
 	printf("\t- GIF time: %ld usec\n", seq_gif_usec);
 	printf("\n");
+
+	printf("Press Enter to continue...");
+	getchar();
 }
 
 
