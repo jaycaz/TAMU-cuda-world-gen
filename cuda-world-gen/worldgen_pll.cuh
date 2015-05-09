@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <Windows.h>
 #include <math.h>
+#include <cuda.h>
 #include <cuda_runtime.h>
 #include <curand.h>
 

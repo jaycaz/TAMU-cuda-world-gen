@@ -347,6 +347,7 @@ void GenerateWorldMap()
 
 	Alpha = (((float)rand()) / MAX_RAND - 0.5)*PI; /* Rotate around x-axis */
 	Beta = (((float)rand()) / MAX_RAND - 0.5)*PI; /* Rotate around y-axis */
+	//printf("(flag1, Alpha, Beta): (%u, %f, %f)\n", flag1, Alpha, Beta);
 
 	// End RNG timing
 	QueryPerformanceCounter(&rng_end_time);
@@ -364,7 +365,9 @@ void GenerateWorldMap()
 	for (Phi = 0; Phi<XRange / 2; Phi++)
 	{
 		//Theta = (int)(YRangeDivPI*atan(*(SinIterPhi + Xsi - Phi + XRange)*TanB)) + YRangeDiv2;
+		//printf("(siniterphi, sin) = (%f, %f)\n", SinIterPhi[Xsi - Phi + XRange], sin((Xsi - Phi) * 2 * PI / XRange));
 		Theta = (int)(YRangeDivPI*atan(SinIterPhi[Xsi - Phi + XRange] * TanB)) + YRangeDiv2;
+		//printf("%d\n", Theta);
 
 		if (flag1)
 		{

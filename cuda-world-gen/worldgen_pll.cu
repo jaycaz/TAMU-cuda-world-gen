@@ -279,9 +279,9 @@ __global__ void GenCUDA(int *WorldMapArray, float *SinIterPhi, int *XRange, int 
 void GenerateWorldMapPll(unsigned seed, int numFaults)
 {
 	// Determine how many threads should be started
-	int numThreads = (int)XRange / 2;
-	int numBlocks = 1;
-	int threadsPerBlock = ceil((float)numThreads / numBlocks);
+	//int numThreads = (int)XRange / 2;
+	int numBlocks = numFaults;
+	int threadsPerBlock = (int)XRange / 2;
 
 	int *d_WorldMapArray;
 	float *d_SinIterPhi;
@@ -311,7 +311,7 @@ void GenerateWorldMapPll(unsigned seed, int numFaults)
 	QueryPerformanceCounter(&rng_start_time);
 
 	// Set up random numbers
-	int numRands = 3 * numThreads;
+	int numRands = 3 * numBlocks * threadsPerBlock;
 	float *d_rands;
 	CUDA_CALL(cudaMalloc(&d_rands, sizeof(float) * numRands));
 
@@ -332,12 +332,12 @@ void GenerateWorldMapPll(unsigned seed, int numFaults)
 	QueryPerformanceCounter(&comp_start);
 
 	// ***** Call kernel ******
-	for (int i = 0; i < numFaults; i++)
-	{
+	//for (int i = 0; i < numFaults; i++)
+	//{
 		GenCUDA<<<numBlocks, threadsPerBlock>>>(d_WorldMapArray, d_SinIterPhi, d_XRange, d_YRange, d_rands);
 		cudaError_t status = cudaDeviceSynchronize();
 		//printf("Generation: %d\n", i);
-	}
+	//}
 	//printf("Status: %d\n", status);
 
 	// End Comp timing
@@ -353,34 +353,36 @@ void GenerateWorldMapPll(unsigned seed, int numFaults)
 
 __global__ void GenCUDA(int *WorldMapArray, float *SinIterPhi, int *XRange, int *YRange, float *rands)
 {
-	float Alpha, Beta;
+	float		  Alpha;
+	float		  Beta;
 	float         TanB;
-	int			 row;
-	int           Theta, Phi, Xsi;
+	int			  *wma_ptr;
+	int			  Phi;
+	int			  Xsi;
+	int			  Theta;
 	unsigned int  flag1;
 
 	// Calculate which Phi thread should take care of
-	Phi = threadIdx.x + (blockIdx.x * blockDim.x);
+	int idx = threadIdx.x + (blockIdx.x * blockDim.x);
+	Phi = threadIdx.x;
+	//printf("Phi = %d + (%d * %d)\n", threadIdx.x, blockIdx.x, blockDim.x);
+	//printf("Thread id: (%d, %d, %d)\n", threadIdx.x, threadIdx.y, threadIdx.z);
 
 	// Determine which of global rand values should be used
 	float rand[3];
-	rand[0] = rands[Phi * 3];
-	rand[1] = rands[Phi * 3 + 1];
-	rand[2] = rands[Phi * 3 + 2];
+	rand[0] = rands[idx * 3];
+	rand[1] = rands[idx * 3 + 1];
+	rand[2] = rands[idx * 3 + 2];
 
-	//flag1 = rand() & 1; /*(int)((((float) rand())/MAX_RAND) + 0.5);*/
-	flag1 = (unsigned) rand[0] & 1; /*(int)((((float) rand())/MAX_RAND) + 0.5);*/
+	flag1 = (int)(rand[0] + 0.5);
 
 	/* Create a random greatcircle...
 	* Start with an equator and rotate it */
-	//Alpha = (((float)rand()) / MAX_RAND - 0.5)*PI; /* Rotate around x-axis */
-	//Beta = (((float)rand()) / MAX_RAND - 0.5)*PI; /* Rotate around y-axis */
-	Alpha = ((rand[1]) / MAX_RAND - 0.5)*PI; /* Rotate around x-axis */
-	Beta = ((rand[2]) / MAX_RAND - 0.5)*PI; /* Rotate around y-axis */
-
+	Alpha = (rand[1] - 0.5)*PI; /* Rotate around x-axis */
+	Beta = (rand[2] - 0.5)*PI; /* Rotate around y-axis */
+	//printf("(flag1, Alpha, Beta): (%u, %f, %f)\n", flag1, Alpha, Beta);
 
 	TanB = tan(acos(cos(Alpha)*cos(Beta)));
-	row = (*YRange) * Phi;
 	float XRangeDivPI = (*XRange) / PI;
 	float XRangeDiv2 = (*XRange) / 2.0f;
 	Xsi = (int)(XRangeDiv2 - (XRangeDivPI * (Beta)));
@@ -389,25 +391,23 @@ __global__ void GenCUDA(int *WorldMapArray, float *SinIterPhi, int *XRange, int 
 	//{
 		float YRangeDivPI = (*YRange) / PI;
 		float YRangeDiv2 = (*YRange) / 2.0f;
-		Theta = (int)(YRangeDivPI*atan(SinIterPhi[Xsi - Phi + *XRange] * TanB)) + YRangeDiv2;
+		//printf("pll (siniterphi, sin) = (%f, %f)\n", SinIterPhi[Xsi - Phi + (*XRange)], sin((Xsi - Phi) * 2 * PI / (*XRange)));
+		Theta = (int)(YRangeDivPI*atan(SinIterPhi[Xsi - Phi + (*XRange)] * TanB)) + YRangeDiv2;
+		//printf("%d\n", Theta);
+		wma_ptr = WorldMapArray + ((*YRange) * Phi + Theta);
 
 		if (flag1)
 		{
 			/* Rise northen hemisphere <=> lower southern */
-			if (WorldMapArray[row + Theta] != INT_MIN)
-				WorldMapArray[row + Theta]--;
-			else
-				WorldMapArray[row + Theta] = -1;
+			atomicCAS(wma_ptr, INT_MIN, 0);
+			atomicSub(wma_ptr, 1);
 		}
 		else
 		{
 			/* Rise southern hemisphere */
-			if (WorldMapArray[row + Theta] != INT_MIN)
-				WorldMapArray[row + Theta]++;
-			else
-				WorldMapArray[row + Theta] = 1;
+			atomicCAS(wma_ptr, INT_MIN, 0);
+			atomicAdd(wma_ptr, 1);
 		}
-		row += (*YRange);
 	//}
 }
 
