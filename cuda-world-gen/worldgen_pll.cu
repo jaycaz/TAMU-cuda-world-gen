@@ -8,8 +8,24 @@ extern "C"
 	#include "worldgen_pll.cuh"
 }
 
+#define CUDA_CALL(x) do {cudaError_t status = x; if(status !=cudaSuccess) { \
+	printf("Error at %s:%d\n",__FILE__, status); \
+	exit(status);}} while(0) 
+#define CURAND_CALL(x) do {curandStatus_t status = x; if(status != CURAND_STATUS_SUCCESS) { \
+	printf("Error at %s:%d\n",__FILE__, status); \
+	exit(status);}} while(0)
+
+//float         Result, Delta;
+//int           i, row, N2;
+//__global__ float *Alpha, *Beta;
+//__global__ float         *TanB;
+//__global__ int			  *row;
+//__global__ int           *Theta, *Phi, *Xsi;
+//__global__ unsigned int  *flag1;
+
 /* Function that generates the worldmap */
-extern "C" void GenerateWorldMapPll();
+void GenerateWorldMapPll(unsigned seed, int numFaults);
+void GenerateRands();
 
 extern "C" void genworld_pll(int argc, char **argv)
 {
@@ -26,13 +42,15 @@ extern "C" void genworld_pll(int argc, char **argv)
 	WorldMapArray = (int *)malloc(XRange*YRange*sizeof(int));
 	if (WorldMapArray == NULL)
 	{
-		fprintf(stderr, "I can't allocate enough memory!\n");
+		fprintf(stderr, "WorldMapArray could not be allocated.");
+		exit(-1);
 	}
 
 	SinIterPhi = (float *)malloc(2 * XRange*sizeof(float));
 	if (SinIterPhi == NULL)
 	{
-		fprintf(stderr, "I can't allocate enough memory!\n");
+		fprintf(stderr, "SinIterPhi could not be allocated.");
+		exit(-1);
 	}
 
 	for (i = 0; i<XRange; i++)
@@ -58,9 +76,9 @@ extern "C" void genworld_pll(int argc, char **argv)
 	NumberOfFaults = 2000;
 	PercentWater = 60;
 	PercentIce = 10;
-	strcpy(SaveName, "default");
+	strcpy(SaveName, "default_pll");
 
-	srand(Seed);
+	//srand(Seed);
 
 	for (j = 0, row = 0; j<XRange; j++)
 	{
@@ -74,10 +92,8 @@ extern "C" void genworld_pll(int argc, char **argv)
 	YRangeDivPI = YRange / PI;
 
 	/* Generate the map! */
-	for (a = 0; a<NumberOfFaults; a++)
-	{
-		GenerateWorldMapPll();
-	}
+	// Call world generation kernel
+	GenerateWorldMapPll(Seed, NumberOfFaults);
 
 	/* Copy data (I have only calculated faults for 1/2 the image.
 	* I can do this due to symmetry... :) */
@@ -111,8 +127,8 @@ extern "C" void genworld_pll(int argc, char **argv)
 	}
 
 	// Time coloring
-	LARGE_INTEGER seq_color_start, seq_color_end;
-	QueryPerformanceCounter(&seq_color_start);
+	LARGE_INTEGER pll_color_start, pll_color_end;
+	QueryPerformanceCounter(&pll_color_start);
 
 	/* Compute MAX and MIN values in WorldMapArray */
 	for (j = 0; j<XRange*YRange; j++)
@@ -201,7 +217,7 @@ extern "C" void genworld_pll(int argc, char **argv)
 			for (j = 0, row = 0; j<XRange; j++)
 			{
 				Color = WorldMapArray[row + i];
-				if (Color < 32) FloodFill4(j, i, Color);
+				//if (Color < 32) FloodFill4(j, i, Color);
 				/* FilledPixels is a global variable which FloodFill4 modifies...
 				* I know it's ugly, but as it is now, this is a hack! :)
 				*/
@@ -218,7 +234,7 @@ extern "C" void genworld_pll(int argc, char **argv)
 			for (j = 0, row = 0; j<XRange; j++)
 			{
 				Color = WorldMapArray[row + i];
-				if (Color < 32) FloodFill4(j, i, Color);
+				//if (Color < 32) FloodFill4(j, i, Color);
 				/* FilledPixels is a global variable which FloodFill4 modifies...
 				* I know it's ugly, but as it is now, this is a hack! :)
 				*/
@@ -230,12 +246,12 @@ extern "C" void genworld_pll(int argc, char **argv)
 	}
 
 	// Finish timing coloring
-	QueryPerformanceCounter(&seq_color_end);
-	seq_color_usec += get_elapsed_usec(seq_color_start, seq_color_end);
+	QueryPerformanceCounter(&pll_color_end);
+	pll_color_usec += get_elapsed_usec(pll_color_start, pll_color_end);
 
 	// Start timing save to gif
-	LARGE_INTEGER seq_gif_start, seq_gif_end;
-	QueryPerformanceCounter(&seq_gif_start);
+	LARGE_INTEGER pll_gif_start, pll_gif_end;
+	QueryPerformanceCounter(&pll_gif_start);
 
 	/* append .gif to SaveFile */
 	sprintf(SaveFile, "%s.gif", SaveName);
@@ -246,8 +262,8 @@ extern "C" void genworld_pll(int argc, char **argv)
 	GIFEncode(Save, XRange, YRange, 1, 0, 8, Red, Green, Blue);
 
 	// Finish timing save to gif
-	QueryPerformanceCounter(&seq_gif_end);
-	seq_gif_usec += get_elapsed_usec(seq_gif_start, seq_gif_end);
+	QueryPerformanceCounter(&pll_gif_end);
+	pll_gif_usec += get_elapsed_usec(pll_gif_start, pll_gif_end);
 
 	fprintf(stderr, "Map created, saved as %s.\n", SaveFile);
 
@@ -257,54 +273,123 @@ extern "C" void genworld_pll(int argc, char **argv)
 	return;
 }
 
-extern "C" void GenerateWorldMapPll()
+__global__ void GenCUDA(int *WorldMapArray, float *SinIterPhi, int *XRange, int *YRange, float *rands);
+
+
+void GenerateWorldMapPll(unsigned seed, int numFaults)
 {
-	float         Alpha, Beta;
-	float         TanB;
-	float         Result, Delta;
-	int           i, row, N2;
-	int           Theta, Phi, Xsi;
-	unsigned int  flag1;
+	// Determine how many threads should be started
+	int numThreads = (int)XRange / 2;
+	int numBlocks = 1;
+	int threadsPerBlock = ceil((float)numThreads / numBlocks);
 
+	int *d_WorldMapArray;
+	float *d_SinIterPhi;
+	
+	// Set up world map array for GPU
+	size_t wmaSize = XRange * YRange * sizeof(int);
+	//CUDA_CALL(cudaMalloc(&d_WorldMapArray, wmaSize));
+	CUDA_CALL(cudaMalloc(&d_WorldMapArray, wmaSize));
+	//printf("WMA last byte: %x\n", WorldMapArray[XRange * YRange - 1]);
+	CUDA_CALL(cudaMemcpy(d_WorldMapArray, WorldMapArray, wmaSize, cudaMemcpyHostToDevice));
 
-	/* I have to do this because of a bug in rand() in Solaris 1...
-	* Here's what the man-page says:
-	*
-	* "The low bits of the numbers generated are not  very  random;
-	*  use  the  middle  bits.  In particular the lowest bit alter-
-	*  nates between 0 and 1."
-	*
-	* So I can't optimize this, but you might if you don't have the
-	* same bug... */
+	// Set up SinIterPhi for GPU
+	size_t sipSize = 2 * XRange * sizeof(float);
+	CUDA_CALL(cudaMalloc(&d_SinIterPhi, sipSize));
+	CUDA_CALL(cudaMemcpy(d_SinIterPhi, SinIterPhi, sipSize, cudaMemcpyHostToDevice));
+
+	// Set up XRange, YRange
+	int *d_XRange;
+	int *d_YRange;
+	CUDA_CALL(cudaMalloc(&d_XRange, sizeof(int)));
+	CUDA_CALL(cudaMemcpy(d_XRange, &XRange, sizeof(int), cudaMemcpyHostToDevice));
+	CUDA_CALL(cudaMalloc(&d_YRange, sizeof(int)));
+	CUDA_CALL(cudaMemcpy(d_YRange, &YRange, sizeof(int), cudaMemcpyHostToDevice));
 
 	// Begin RNG timing
 	LARGE_INTEGER rng_start_time, rng_end_time;
 	QueryPerformanceCounter(&rng_start_time);
 
-	flag1 = rand() & 1; /*(int)((((float) rand())/MAX_RAND) + 0.5);*/
+	// Set up random numbers
+	int numRands = 3 * numThreads;
+	float *d_rands;
+	CUDA_CALL(cudaMalloc(&d_rands, sizeof(float) * numRands));
 
-	/* Create a random greatcircle...
-	* Start with an equator and rotate it */
-
-	Alpha = (((float)rand()) / MAX_RAND - 0.5)*PI; /* Rotate around x-axis */
-	Beta = (((float)rand()) / MAX_RAND - 0.5)*PI; /* Rotate around y-axis */
+	// Create pseudo-random number generator
+	curandGenerator_t gen;
+	CURAND_CALL(curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT)); 
+	// Set seed
+	CURAND_CALL(curandSetPseudoRandomGeneratorSeed(gen, seed)); 
+	// Generate n floats on device
+	CURAND_CALL(curandGenerateUniform(gen, d_rands, numRands));
 
 	// End RNG timing
 	QueryPerformanceCounter(&rng_end_time);
-	seq_rng_usec += get_elapsed_usec(rng_start_time, rng_end_time);
+	pll_rng_usec += get_elapsed_usec(rng_start_time, rng_end_time);
 
+	// Begin Comp timing
+	LARGE_INTEGER comp_start, comp_end;
+	QueryPerformanceCounter(&comp_start);
 
-	// Begin comp timing
-	LARGE_INTEGER comp_start_time, comp_end_time;
-	QueryPerformanceCounter(&comp_start_time);
+	// ***** Call kernel ******
+	for (int i = 0; i < numFaults; i++)
+	{
+		GenCUDA<<<numBlocks, threadsPerBlock>>>(d_WorldMapArray, d_SinIterPhi, d_XRange, d_YRange, d_rands);
+		cudaError_t status = cudaDeviceSynchronize();
+		//printf("Generation: %d\n", i);
+	}
+	//printf("Status: %d\n", status);
+
+	// End Comp timing
+	QueryPerformanceCounter(&comp_end);
+	pll_comp_usec += get_elapsed_usec(comp_start, comp_end);
+
+	// Retrieve world map array data from GPU
+	CUDA_CALL(cudaMemcpy(WorldMapArray, d_WorldMapArray, wmaSize, cudaMemcpyDeviceToHost));
+
+	CUDA_CALL(cudaFree(d_WorldMapArray));
+	CUDA_CALL(cudaFree(d_SinIterPhi));
+}
+
+__global__ void GenCUDA(int *WorldMapArray, float *SinIterPhi, int *XRange, int *YRange, float *rands)
+{
+	float Alpha, Beta;
+	float         TanB;
+	int			 row;
+	int           Theta, Phi, Xsi;
+	unsigned int  flag1;
+
+	// Calculate which Phi thread should take care of
+	Phi = threadIdx.x + (blockIdx.x * blockDim.x);
+
+	// Determine which of global rand values should be used
+	float rand[3];
+	rand[0] = rands[Phi * 3];
+	rand[1] = rands[Phi * 3 + 1];
+	rand[2] = rands[Phi * 3 + 2];
+
+	//flag1 = rand() & 1; /*(int)((((float) rand())/MAX_RAND) + 0.5);*/
+	flag1 = (unsigned) rand[0] & 1; /*(int)((((float) rand())/MAX_RAND) + 0.5);*/
+
+	/* Create a random greatcircle...
+	* Start with an equator and rotate it */
+	//Alpha = (((float)rand()) / MAX_RAND - 0.5)*PI; /* Rotate around x-axis */
+	//Beta = (((float)rand()) / MAX_RAND - 0.5)*PI; /* Rotate around y-axis */
+	Alpha = ((rand[1]) / MAX_RAND - 0.5)*PI; /* Rotate around x-axis */
+	Beta = ((rand[2]) / MAX_RAND - 0.5)*PI; /* Rotate around y-axis */
+
 
 	TanB = tan(acos(cos(Alpha)*cos(Beta)));
-	row = 0;
-	Xsi = (int)(XRange / 2 - (XRange / PI)*Beta);
+	row = (*YRange) * Phi;
+	float XRangeDivPI = (*XRange) / PI;
+	float XRangeDiv2 = (*XRange) / 2.0f;
+	Xsi = (int)(XRangeDiv2 - (XRangeDivPI * (Beta)));
 
-	for (Phi = 0; Phi<XRange / 2; Phi++)
-	{
-		Theta = (int)(YRangeDivPI*atan(*(SinIterPhi + Xsi - Phi + XRange)*TanB)) + YRangeDiv2;
+	//for (Phi = 0; Phi < XRange / 2; Phi++)
+	//{
+		float YRangeDivPI = (*YRange) / PI;
+		float YRangeDiv2 = (*YRange) / 2.0f;
+		Theta = (int)(YRangeDivPI*atan(SinIterPhi[Xsi - Phi + *XRange] * TanB)) + YRangeDiv2;
 
 		if (flag1)
 		{
@@ -322,11 +407,7 @@ extern "C" void GenerateWorldMapPll()
 			else
 				WorldMapArray[row + Theta] = 1;
 		}
-		row += YRange;
-	}
-
-	// End comp time
-	QueryPerformanceCounter(&comp_end_time);
-	seq_comp_usec += get_elapsed_usec(comp_start_time, comp_end_time);
-
+		row += (*YRange);
+	//}
 }
+

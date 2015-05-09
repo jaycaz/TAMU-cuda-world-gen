@@ -8,6 +8,12 @@ extern long seq_comp_usec = 0;
 extern long seq_color_usec = 0;
 extern long seq_gif_usec = 0;
 
+extern long pll_total_usec = 0;
+extern long pll_rng_usec = 0;
+extern long pll_comp_usec = 0;
+extern long pll_color_usec = 0;
+extern long pll_gif_usec = 0;
+
 LONGLONG TICKS_PER_SEC = -1;
 
 long get_elapsed_usec(LARGE_INTEGER start, LARGE_INTEGER end)
@@ -43,9 +49,18 @@ void print_seq_stats()
 	printf("\t- Color time: %ld usec\n", seq_color_usec);
 	printf("\t- GIF time: %ld usec\n", seq_gif_usec);
 	printf("\n");
+}
+
+void print_pll_stats()
+{
+	printf("\nParallel Algorithm Statistics:\n");
+	printf("\t- Total time: %ld usec\n", pll_total_usec);
+	printf("\t- Elevation computation time: %ld usec\n", pll_comp_usec);
+	printf("\t- RNG time: %ld usec\n", pll_rng_usec);
+	printf("\t- Color time: %ld usec\n", pll_color_usec);
+	printf("\t- GIF time: %ld usec\n", pll_gif_usec);
+	printf("\n");
 
 	printf("Press Enter to continue...");
 	getchar();
 }
-
-

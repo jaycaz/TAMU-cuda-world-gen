@@ -117,7 +117,7 @@ void genworld_seq(int argc, char **argv)
 	NumberOfFaults = 2000;
 	PercentWater = 60;
 	PercentIce = 10;
-	strcpy(SaveName, "default");
+	strcpy(SaveName, "default_seq");
 
 	srand(Seed);
 
@@ -260,7 +260,7 @@ void genworld_seq(int argc, char **argv)
 			for (j = 0, row = 0; j<XRange; j++)
 			{
 				Color = WorldMapArray[row + i];
-				if (Color < 32) FloodFill4(j, i, Color);
+				//if (Color < 32) FloodFill4(j, i, Color);
 				/* FilledPixels is a global variable which FloodFill4 modifies...
 				* I know it's ugly, but as it is now, this is a hack! :)
 				*/
@@ -277,7 +277,7 @@ void genworld_seq(int argc, char **argv)
 			for (j = 0, row = 0; j<XRange; j++)
 			{
 				Color = WorldMapArray[row + i];
-				if (Color < 32) FloodFill4(j, i, Color);
+				//if (Color < 32) FloodFill4(j, i, Color);
 				/* FilledPixels is a global variable which FloodFill4 modifies...
 				* I know it's ugly, but as it is now, this is a hack! :)
 				*/
@@ -363,7 +363,8 @@ void GenerateWorldMap()
 
 	for (Phi = 0; Phi<XRange / 2; Phi++)
 	{
-		Theta = (int)(YRangeDivPI*atan(*(SinIterPhi + Xsi - Phi + XRange)*TanB)) + YRangeDiv2;
+		//Theta = (int)(YRangeDivPI*atan(*(SinIterPhi + Xsi - Phi + XRange)*TanB)) + YRangeDiv2;
+		Theta = (int)(YRangeDivPI*atan(SinIterPhi[Xsi - Phi + XRange] * TanB)) + YRangeDiv2;
 
 		if (flag1)
 		{
