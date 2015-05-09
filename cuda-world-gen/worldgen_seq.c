@@ -67,7 +67,7 @@
 #include "worldgen_seq.h"
 
 /* Function that generates the worldmap */
-void GenerateWorldMap();
+void GenerateWorldMap(int index, int *rands);
 
 
 void genworld_seq(int argc, char **argv)
@@ -82,22 +82,28 @@ void genworld_seq(int argc, char **argv)
 	char SaveFile[256];  /* SaveName + .gif */
 	FILE * Save;
 
-	WorldMapArray = (int *)malloc(XRange*YRange*sizeof(int));
 	if (WorldMapArray == NULL)
 	{
-		fprintf(stderr, "I can't allocate enough memory!\n");
+		WorldMapArray = (int *)malloc(XRange*YRange*sizeof(int));
+		if (WorldMapArray == NULL)
+		{
+			fprintf(stderr, "I can't allocate enough memory!\n");
+		}
 	}
 
-	SinIterPhi = (float *)malloc(2 * XRange*sizeof(float));
 	if (SinIterPhi == NULL)
 	{
-		fprintf(stderr, "I can't allocate enough memory!\n");
+		SinIterPhi = (float *)malloc(2 * XRange*sizeof(float));
+		if (SinIterPhi == NULL)
+		{
+			fprintf(stderr, "I can't allocate enough memory!\n");
+		}
+		for (i = 0; i<XRange; i++)
+		{
+			SinIterPhi[i] = SinIterPhi[i + XRange] = (float)sin(i * 2 * PI / XRange);
+		}
 	}
 
-	for (i = 0; i<XRange; i++)
-	{
-		SinIterPhi[i] = SinIterPhi[i + XRange] = (float)sin(i * 2 * PI / XRange);
-	}
 
 	/*
 	fprintf(stderr, "Seed: ");
@@ -132,11 +138,31 @@ void genworld_seq(int argc, char **argv)
 	YRangeDiv2 = YRange / 2;
 	YRangeDivPI = YRange / PI;
 
-	/* Generate the map! */
-	//for (a = 0; a<NumberOfFaults; a++)
-	for (a = 0; a<2; a++)
+
+	// Create random numbers in advance 
+	// to make the timing more accurate
+
+	// Begin RNG timing
+	LARGE_INTEGER rng_start_time, rng_end_time;
+	QueryPerformanceCounter(&rng_start_time);
+
+	// Create random numbers 
+	int numRands = NumberOfFaults * 3;
+	int *rands = malloc(numRands * sizeof(int));
+	for (int i = 0; i < numRands; i++)
 	{
-		GenerateWorldMap();
+		rands[i] = rand();
+	}
+
+	// End RNG timing
+	QueryPerformanceCounter(&rng_end_time);
+	seq_rng_usec += get_elapsed_usec(rng_start_time, rng_end_time);
+
+
+	/* Generate the map! */
+	for (a = 0; a<NumberOfFaults; a++)
+	{
+		GenerateWorldMap(a, rands);
 	}
 
 	/* Copy data (I have only calculated faults for 1/2 the image.
@@ -311,14 +337,16 @@ void genworld_seq(int argc, char **argv)
 
 	fprintf(stderr, "Map created, saved as %s.\n", SaveFile);
 
-	//free(WorldMapArray);
-	//free(SinIterPhi);
+	free(WorldMapArray);
+	free(SinIterPhi);
+	WorldMapArray = NULL;
+	SinIterPhi = NULL;
 
 	//exit(0);
 	return;
 }
 
-void GenerateWorldMap()
+void GenerateWorldMap(int index, int *rands)
 {
 	float         Alpha, Beta;
 	float         TanB;
@@ -338,22 +366,18 @@ void GenerateWorldMap()
 	* So I can't optimize this, but you might if you don't have the
 	* same bug... */
 
-	// Begin RNG timing
-	LARGE_INTEGER rng_start_time, rng_end_time;
-	QueryPerformanceCounter(&rng_start_time);
 
-	flag1 = rand() & 1; /*(int)((((float) rand())/MAX_RAND) + 0.5);*/
+	//flag1 = rand() & 1; /*(int)((((float) rand())/MAX_RAND) + 0.5);*/
+	flag1 = rands[index * 3] & 1; 
 
 	/* Create a random greatcircle...
 	* Start with an equator and rotate it */
 
-	Alpha = (((float)rand()) / MAX_RAND - 0.5)*PI; /* Rotate around x-axis */
-	Beta = (((float)rand()) / MAX_RAND - 0.5)*PI; /* Rotate around y-axis */
-	//printf("(flag1, Alpha, Beta): (%u, %f, %f)\n", flag1, Alpha, Beta);
+	//Alpha = (((float)rand()) / MAX_RAND - 0.5)*PI; /* Rotate around x-axis */
+	//Beta = (((float)rand()) / MAX_RAND - 0.5)*PI; /* Rotate around y-axis */
 
-	// End RNG timing
-	QueryPerformanceCounter(&rng_end_time);
-	seq_rng_usec += get_elapsed_usec(rng_start_time, rng_end_time);
+	Alpha = (((float)rands[index * 3 + 1]) / MAX_RAND - 0.5)*PI; /* Rotate around x-axis */
+	Beta = (((float)rands[index * 3 + 2]) / MAX_RAND - 0.5)*PI; /* Rotate around y-axis */
 
 
 	// Begin comp timing

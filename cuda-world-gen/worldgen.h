@@ -30,12 +30,12 @@
 #endif
 
 // Global Variables
-int             *WorldMapArray;
 int             Histogram[256];
 int             FilledPixels;
 float           YRangeDiv2, YRangeDivPI;
-float           *SinIterPhi;
 
+extern int             *WorldMapArray;
+extern float           *SinIterPhi;
 extern int             XRange;
 extern int             YRange;
 extern int             Red[49];

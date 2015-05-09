@@ -3,6 +3,8 @@
 
 #include "worldgen.h"
 
+extern int   *WorldMapArray = NULL;
+extern float *SinIterPhi = NULL;
 extern int XRange = 320;
 extern int YRange = 160;
 extern int Red[49] = { 0, 0, 0, 0, 0, 0, 0, 0, 34, 68, 102, 119, 136, 153, 170, 187, 0, 34, 34, 119, 187, 255, 238, 221, 204, 187, 170, 153, 136, 119, 85, 68, 255, 250, 245, 240, 235, 230, 225, 220, 215, 210, 205, 200, 195, 190, 185, 180, 175 };

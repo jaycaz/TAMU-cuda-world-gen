@@ -39,23 +39,28 @@ extern "C" void genworld_pll(int argc, char **argv)
 	char SaveFile[256];  /* SaveName + .gif */
 	FILE * Save;
 
-	WorldMapArray = (int *)malloc(XRange*YRange*sizeof(int));
 	if (WorldMapArray == NULL)
 	{
-		fprintf(stderr, "WorldMapArray could not be allocated.");
-		exit(-1);
+		WorldMapArray = (int *)malloc(XRange*YRange*sizeof(int));
+		if (WorldMapArray == NULL)
+		{
+			fprintf(stderr, "WorldMapArray could not be allocated.");
+			exit(-1);
+		}
 	}
 
-	SinIterPhi = (float *)malloc(2 * XRange*sizeof(float));
 	if (SinIterPhi == NULL)
 	{
-		fprintf(stderr, "SinIterPhi could not be allocated.");
-		exit(-1);
-	}
-
-	for (i = 0; i<XRange; i++)
-	{
-		SinIterPhi[i] = SinIterPhi[i + XRange] = (float)sin(i * 2 * PI / XRange);
+		SinIterPhi = (float *)malloc(2 * XRange*sizeof(float));
+		if (SinIterPhi == NULL)
+		{
+			fprintf(stderr, "SinIterPhi could not be allocated.");
+			exit(-1);
+		}
+		for (i = 0; i<XRange; i++)
+		{
+			SinIterPhi[i] = SinIterPhi[i + XRange] = (float)sin(i * 2 * PI / XRange);
+		}
 	}
 
 	/*
@@ -267,7 +272,10 @@ extern "C" void genworld_pll(int argc, char **argv)
 
 	fprintf(stderr, "Map created, saved as %s.\n", SaveFile);
 
-	//free(WorldMapArray);
+	free(WorldMapArray);
+	free(SinIterPhi);
+	WorldMapArray = NULL;
+	SinIterPhi = NULL;
 
 	//exit(0);
 	return;
