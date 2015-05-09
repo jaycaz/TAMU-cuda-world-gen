@@ -39,6 +39,8 @@ extern "C" void genworld_pll(int argc, char **argv)
 	char SaveFile[256];  /* SaveName + .gif */
 	FILE * Save;
 
+	init_worldgen();
+
 	if (WorldMapArray == NULL)
 	{
 		WorldMapArray = (int *)malloc(XRange*YRange*sizeof(int));

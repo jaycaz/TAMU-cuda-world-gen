@@ -30,12 +30,12 @@
 #endif
 
 // Global Variables
+int             *WorldMapArray;
+float           *SinIterPhi;
 int             Histogram[256];
 int             FilledPixels;
 float           YRangeDiv2, YRangeDivPI;
 
-extern int             *WorldMapArray;
-extern float           *SinIterPhi;
 extern int             XRange;
 extern int             YRange;
 extern int             Red[49];
@@ -45,3 +45,6 @@ extern int             Blue[49];
 /* 4-connective floodfill algorithm which I use for constructing
 *  the ice-caps.*/
 void FloodFill4(int x, int y, int OldColor);
+
+// Reset worldgen global variables
+void init_worldgen();
