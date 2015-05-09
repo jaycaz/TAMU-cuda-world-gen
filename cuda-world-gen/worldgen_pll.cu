@@ -88,8 +88,8 @@ extern "C" void genworld_pll(int argc, char **argv)
 	}
 
 	/* Define some "constants" which we use frequently */
-	YRangeDiv2 = YRange / 2;
-	YRangeDivPI = YRange / PI;
+	YRangeDiv2 = (float) YRange / 2;
+	YRangeDivPI = (float) YRange / PI;
 
 	/* Generate the map! */
 	// Call world generation kernel
@@ -267,7 +267,7 @@ extern "C" void genworld_pll(int argc, char **argv)
 
 	fprintf(stderr, "Map created, saved as %s.\n", SaveFile);
 
-	free(WorldMapArray);
+	//free(WorldMapArray);
 
 	//exit(0);
 	return;
@@ -311,7 +311,7 @@ void GenerateWorldMapPll(unsigned seed, int numFaults)
 	QueryPerformanceCounter(&rng_start_time);
 
 	// Set up random numbers
-	int numRands = 3 * numBlocks * threadsPerBlock;
+	int numRands = 3 * numBlocks;
 	float *d_rands;
 	CUDA_CALL(cudaMalloc(&d_rands, sizeof(float) * numRands));
 
@@ -319,7 +319,7 @@ void GenerateWorldMapPll(unsigned seed, int numFaults)
 	curandGenerator_t gen;
 	CURAND_CALL(curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT)); 
 	// Set seed
-	CURAND_CALL(curandSetPseudoRandomGeneratorSeed(gen, seed)); 
+	CURAND_CALL(curandSetPseudoRandomGeneratorSeed(gen, 6)); 
 	// Generate n floats on device
 	CURAND_CALL(curandGenerateUniform(gen, d_rands, numRands));
 
@@ -353,14 +353,14 @@ void GenerateWorldMapPll(unsigned seed, int numFaults)
 
 __global__ void GenCUDA(int *WorldMapArray, float *SinIterPhi, int *XRange, int *YRange, float *rands)
 {
-	float		  Alpha;
-	float		  Beta;
-	float         TanB;
+	__shared__ float		 Alpha;
+	__shared__ float		 Beta;
+	__shared__ float         TanB;
+	__shared__ int		     Xsi;
+	__shared__ unsigned int  flag1;
 	int			  *wma_ptr;
 	int			  Phi;
-	int			  Xsi;
 	int			  Theta;
-	unsigned int  flag1;
 
 	// Calculate which Phi thread should take care of
 	int idx = threadIdx.x + (blockIdx.x * blockDim.x);
@@ -368,46 +368,51 @@ __global__ void GenCUDA(int *WorldMapArray, float *SinIterPhi, int *XRange, int 
 	//printf("Phi = %d + (%d * %d)\n", threadIdx.x, blockIdx.x, blockDim.x);
 	//printf("Thread id: (%d, %d, %d)\n", threadIdx.x, threadIdx.y, threadIdx.z);
 
-	// Determine which of global rand values should be used
-	float rand[3];
-	rand[0] = rands[idx * 3];
-	rand[1] = rands[idx * 3 + 1];
-	rand[2] = rands[idx * 3 + 2];
+	if (Phi == 0)
+	{
+		// Extract random values
+		float rand[3];
+		rand[0] = rands[blockIdx.x * 3];
+		rand[1] = rands[blockIdx.x * 3 + 1];
+		rand[2] = rands[blockIdx.x * 3 + 2];
 
-	flag1 = (int)(rand[0] + 0.5);
+		flag1 = (int)(rand[0] + 0.5);
 
-	/* Create a random greatcircle...
-	* Start with an equator and rotate it */
-	Alpha = (rand[1] - 0.5)*PI; /* Rotate around x-axis */
-	Beta = (rand[2] - 0.5)*PI; /* Rotate around y-axis */
-	//printf("(flag1, Alpha, Beta): (%u, %f, %f)\n", flag1, Alpha, Beta);
+		/* Create a random greatcircle...
+		* Start with an equator and rotate it */
+		Alpha = (rand[1] - 0.5)*PI; /* Rotate around x-axis */
+		Beta = (rand[2] - 0.5)*PI; /* Rotate around y-axis */
+		//printf("(flag1, Alpha, Beta): (%u, %f, %f)\n", flag1, Alpha, Beta);
 
-	TanB = tan(acos(cos(Alpha)*cos(Beta)));
-	float XRangeDivPI = (*XRange) / PI;
-	float XRangeDiv2 = (*XRange) / 2.0f;
-	Xsi = (int)(XRangeDiv2 - (XRangeDivPI * (Beta)));
+		TanB = tan(acos(cos(Alpha)*cos(Beta)));
+		Xsi = (int)((*XRange) / 2 - ((*XRange) / PI) * Beta);
+		//printf("Xsi: %d\n", Xsi);
+	}
+
+	__syncthreads();
+	//printf("XRange, YRange: %d, %d\n", *XRange, *YRange);
 
 	//for (Phi = 0; Phi < XRange / 2; Phi++)
 	//{
 		float YRangeDivPI = (*YRange) / PI;
-		float YRangeDiv2 = (*YRange) / 2.0f;
+		float YRangeDiv2 = (*YRange) / 2;
 		//printf("pll (siniterphi, sin) = (%f, %f)\n", SinIterPhi[Xsi - Phi + (*XRange)], sin((Xsi - Phi) * 2 * PI / (*XRange)));
+		int row = (*YRange) * Phi;
+		//printf("pll_row: %d\n", row);
 		Theta = (int)(YRangeDivPI*atan(SinIterPhi[Xsi - Phi + (*XRange)] * TanB)) + YRangeDiv2;
-		//printf("%d\n", Theta);
-		wma_ptr = WorldMapArray + ((*YRange) * Phi + Theta);
+		//printf("Phi, sip, theta: %d, %f, %d\n", Phi, SinIterPhi[Xsi - Phi + (*XRange)], Theta);
+		wma_ptr = WorldMapArray + (row + Theta);
 
+		atomicCAS(wma_ptr, INT_MIN, 0);
 		if (flag1)
 		{
 			/* Rise northen hemisphere <=> lower southern */
-			atomicCAS(wma_ptr, INT_MIN, 0);
 			atomicSub(wma_ptr, 1);
 		}
 		else
 		{
 			/* Rise southern hemisphere */
-			atomicCAS(wma_ptr, INT_MIN, 0);
 			atomicAdd(wma_ptr, 1);
 		}
 	//}
 }
-

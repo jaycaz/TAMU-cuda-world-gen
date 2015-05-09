@@ -60,7 +60,4 @@ void print_pll_stats()
 	printf("\t- Color time: %ld usec\n", pll_color_usec);
 	printf("\t- GIF time: %ld usec\n", pll_gif_usec);
 	printf("\n");
-
-	printf("Press Enter to continue...");
-	getchar();
 }

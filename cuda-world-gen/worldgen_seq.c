@@ -133,7 +133,8 @@ void genworld_seq(int argc, char **argv)
 	YRangeDivPI = YRange / PI;
 
 	/* Generate the map! */
-	for (a = 0; a<NumberOfFaults; a++)
+	//for (a = 0; a<NumberOfFaults; a++)
+	for (a = 0; a<2; a++)
 	{
 		GenerateWorldMap();
 	}
@@ -310,7 +311,8 @@ void genworld_seq(int argc, char **argv)
 
 	fprintf(stderr, "Map created, saved as %s.\n", SaveFile);
 
-	free(WorldMapArray);
+	//free(WorldMapArray);
+	//free(SinIterPhi);
 
 	//exit(0);
 	return;
@@ -361,13 +363,12 @@ void GenerateWorldMap()
 	TanB = tan(acos(cos(Alpha)*cos(Beta)));
 	row = 0;
 	Xsi = (int)(XRange / 2 - (XRange / PI)*Beta);
+	//printf("Xsi: %d\n", Xsi);
 
 	for (Phi = 0; Phi<XRange / 2; Phi++)
 	{
 		//Theta = (int)(YRangeDivPI*atan(*(SinIterPhi + Xsi - Phi + XRange)*TanB)) + YRangeDiv2;
-		//printf("(siniterphi, sin) = (%f, %f)\n", SinIterPhi[Xsi - Phi + XRange], sin((Xsi - Phi) * 2 * PI / XRange));
 		Theta = (int)(YRangeDivPI*atan(SinIterPhi[Xsi - Phi + XRange] * TanB)) + YRangeDiv2;
-		//printf("%d\n", Theta);
 
 		if (flag1)
 		{

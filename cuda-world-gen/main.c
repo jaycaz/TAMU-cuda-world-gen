@@ -18,7 +18,7 @@ int main(int argc, char **argv)
 	QueryPerformanceCounter(&seq_start);
 
 	// Run sequential generation algorithm
-	genworld_seq(argc, argv);
+	//genworld_seq(argc, argv);
 
 	// Get total algorithm time
 	QueryPerformanceCounter(&seq_end);
@@ -48,6 +48,8 @@ int main(int argc, char **argv)
 		getchar();
         return 1;
     }
+
+	free(WorldMapArray);
 
 	printf("Press Enter to continue...");
 	getchar();
