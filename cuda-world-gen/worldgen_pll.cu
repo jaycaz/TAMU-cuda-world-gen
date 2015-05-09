@@ -8,6 +8,8 @@ extern "C"
 	#include "worldgen_pll.cuh"
 }
 
+#define CUDA_MAX_BLOCKS 65535
+
 #define CUDA_CALL(x) do {cudaError_t status = x; if(status !=cudaSuccess) { \
 	printf("Error at %s:%d\n",__FILE__, status); \
 	exit(status);}} while(0) 
@@ -80,7 +82,7 @@ extern "C" void genworld_pll(int argc, char **argv)
 	*/
 
 	Seed = 12345;
-	NumberOfFaults = 2000;
+	NumberOfFaults = 500000;
 	PercentWater = 60;
 	PercentIce = 10;
 	strcpy(SaveName, "default_pll");
@@ -342,12 +344,15 @@ void GenerateWorldMapPll(unsigned seed, int numFaults)
 	QueryPerformanceCounter(&comp_start);
 
 	// ***** Call kernel ******
-	//for (int i = 0; i < numFaults; i++)
-	//{
-		GenCUDA<<<numBlocks, threadsPerBlock>>>(d_WorldMapArray, d_SinIterPhi, d_XRange, d_YRange, d_rands);
+	int curBlock = 0;
+	while (curBlock < numBlocks)
+	{
+		int runBlocks = min(numBlocks, CUDA_MAX_BLOCKS);
+		GenCUDA<<<runBlocks, threadsPerBlock>>>(d_WorldMapArray, d_SinIterPhi, d_XRange, d_YRange, d_rands);
 		cudaError_t status = cudaDeviceSynchronize();
+		curBlock += runBlocks;
 		//printf("Generation: %d\n", i);
-	//}
+	}
 	//printf("Status: %d\n", status);
 
 	// End Comp timing

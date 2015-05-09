@@ -122,7 +122,7 @@ void genworld_seq(int argc, char **argv)
 	*/
 
 	Seed = 12345;
-	NumberOfFaults = 2000;
+	NumberOfFaults = 500000;
 	PercentWater = 60;
 	PercentIce = 10;
 	strcpy(SaveName, "default_seq");

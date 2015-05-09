@@ -19,7 +19,6 @@ int main(int argc, char **argv)
 
 	// Run sequential generation algorithm
 	genworld_seq(argc, argv);
-	genworld_seq(argc, argv);
 
 	// Get total algorithm time
 	QueryPerformanceCounter(&seq_end);
@@ -34,7 +33,7 @@ int main(int argc, char **argv)
 	QueryPerformanceCounter(&pll_start);
 
 	// Run parallel generation algorithm
-	//genworld_pll(argc, argv);
+	genworld_pll(argc, argv);
 
 	// Get total algorithm time
 	QueryPerformanceCounter(&pll_end);
