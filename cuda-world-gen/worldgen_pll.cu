@@ -17,19 +17,10 @@ extern "C"
 	printf("Error at %s:%d\n",__FILE__, status); \
 	exit(status);}} while(0)
 
-//float         Result, Delta;
-//int           i, row, N2;
-//__global__ float *Alpha, *Beta;
-//__global__ float         *TanB;
-//__global__ int			  *row;
-//__global__ int           *Theta, *Phi, *Xsi;
-//__global__ unsigned int  *flag1;
-
 /* Function that generates the worldmap */
 void GenerateWorldMapPll(unsigned seed, int numFaults);
-void GenerateRands();
 
-extern "C" void genworld_pll(int argc, char **argv)
+extern "C" void genworld_pll(int numFaults)
 {
 	int       NumberOfFaults = 0, a, j, i, Color, MaxZ = 1, MinZ = -1;
 	int       row, TwoColorMode = 0;
@@ -40,6 +31,10 @@ extern "C" void genworld_pll(int argc, char **argv)
 	char SaveName[256];  /* 255 character filenames should be enough? */
 	char SaveFile[256];  /* SaveName + .gif */
 	FILE * Save;
+
+	// Begin timing for parallel algorithm
+	LARGE_INTEGER pll_start, pll_end;
+	QueryPerformanceCounter(&pll_start);
 
 	init_worldgen();
 
@@ -81,13 +76,13 @@ extern "C" void genworld_pll(int argc, char **argv)
 	scanf("%8s", SaveName);
 	*/
 
-	Seed = 12345;
-	NumberOfFaults = 500000;
+	Seed = time(NULL);
+	NumberOfFaults = numFaults;
 	PercentWater = 60;
 	PercentIce = 10;
 	strcpy(SaveName, "default_pll");
 
-	//srand(Seed);
+	srand(Seed);
 
 	for (j = 0, row = 0; j<XRange; j++)
 	{
@@ -274,14 +269,17 @@ extern "C" void genworld_pll(int argc, char **argv)
 	QueryPerformanceCounter(&pll_gif_end);
 	pll_gif_usec += get_elapsed_usec(pll_gif_start, pll_gif_end);
 
-	fprintf(stderr, "Map created, saved as %s.\n", SaveFile);
+	//fprintf(stderr, "Map created, saved as %s.\n", SaveFile);
 
 	free(WorldMapArray);
 	free(SinIterPhi);
 	WorldMapArray = NULL;
 	SinIterPhi = NULL;
 
-	//exit(0);
+	// Get total algorithm time
+	QueryPerformanceCounter(&pll_end);
+	pll_total_usec += get_elapsed_usec(pll_start, pll_end);
+
 	return;
 }
 
@@ -329,9 +327,12 @@ void GenerateWorldMapPll(unsigned seed, int numFaults)
 
 	// Create pseudo-random number generator
 	curandGenerator_t gen;
+	//CURAND_CALL(curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT)); 
 	CURAND_CALL(curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT)); 
+	// Set ordering (for increased performance)
+	CURAND_CALL(curandSetGeneratorOrdering(gen, CURAND_ORDERING_PSEUDO_SEEDED));
 	// Set seed
-	CURAND_CALL(curandSetPseudoRandomGeneratorSeed(gen, 6)); 
+	CURAND_CALL(curandSetPseudoRandomGeneratorSeed(gen, seed)); 
 	// Generate n floats on device
 	CURAND_CALL(curandGenerateUniform(gen, d_rands, numRands));
 

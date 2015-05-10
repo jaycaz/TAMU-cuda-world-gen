@@ -8,6 +8,7 @@
 #include    <stdlib.h>
 #include    <Windows.h>
 #include    <math.h>
+#include    <time.h>
 
 #include "gifencode.h"
 #include "stats.h"
@@ -28,6 +29,8 @@
 #else
 #define MAX_RAND  0x7FFFFFFF
 #endif
+
+#define DEFAULT_NUM_FAULTS 2000
 
 // Global Variables
 int             *WorldMapArray;

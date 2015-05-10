@@ -3,7 +3,8 @@
 
 #pragma once
 
-// Number of trials in test
-extern int num_trials;
+#include "worldgen_seq.h"
+#include "worldgen_pll.cuh"
 
-extern int num_faults;
+void run_seq_trials(int numTrials, int numFaults);
+void run_pll_trials(int numTrials, int numFaults);

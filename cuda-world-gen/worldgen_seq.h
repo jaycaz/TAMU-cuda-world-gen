@@ -11,4 +11,4 @@
 
 #include "worldgen.h"
 
-void genworld_seq(int argc, char **argv);
+void genworld_seq(int numFaults);

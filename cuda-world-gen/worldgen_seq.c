@@ -69,8 +69,7 @@
 /* Function that generates the worldmap */
 void GenerateWorldMap(int index, int *rands);
 
-
-void genworld_seq(int argc, char **argv)
+void genworld_seq(int numFaults)
 {
 	int       NumberOfFaults = 0, a, j, i, Color, MaxZ = 1, MinZ = -1;
 	int       row, TwoColorMode = 0;
@@ -81,6 +80,10 @@ void genworld_seq(int argc, char **argv)
 	char SaveName[256];  /* 255 character filenames should be enough? */
 	char SaveFile[256];  /* SaveName + .gif */
 	FILE * Save;
+
+	// Begin timing for sequential algorithm
+	LARGE_INTEGER seq_start, seq_end;
+	QueryPerformanceCounter(&seq_start);
 
 	init_worldgen();
 
@@ -106,23 +109,8 @@ void genworld_seq(int argc, char **argv)
 		}
 	}
 
-
-	/*
-	fprintf(stderr, "Seed: ");
-	scanf("%d", &Seed);
-	fprintf(stderr, "Number of faults: ");
-	scanf("%d", &NumberOfFaults);
-	fprintf(stderr, "Percent water: ");
-	scanf("%d", &PercentWater);
-	fprintf(stderr, "Percent ice: ");
-	scanf("%d", &PercentIce);
-
-	fprintf(stderr, "Save as (.GIF will be appended): ");
-	scanf("%8s", SaveName);
-	*/
-
-	Seed = 12345;
-	NumberOfFaults = 500000;
+	Seed = time(NULL);
+	NumberOfFaults = numFaults;
 	PercentWater = 60;
 	PercentIce = 10;
 	strcpy(SaveName, "default_seq");
@@ -337,12 +325,15 @@ void genworld_seq(int argc, char **argv)
 	QueryPerformanceCounter(&seq_gif_end);
 	seq_gif_usec += get_elapsed_usec(seq_gif_start, seq_gif_end);
 
-	fprintf(stderr, "Map created, saved as %s.\n", SaveFile);
+	//fprintf(stderr, "Map created, saved as %s.\n", SaveFile);
 
 	free(WorldMapArray);
 	free(SinIterPhi);
 	WorldMapArray = NULL;
 	SinIterPhi = NULL;
+	// Get total algorithm time
+	QueryPerformanceCounter(&seq_end);
+	seq_total_usec += get_elapsed_usec(seq_start, seq_end);
 
 	//exit(0);
 	return;

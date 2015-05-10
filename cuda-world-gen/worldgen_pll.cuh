@@ -15,4 +15,4 @@
 
 #include "worldgen.h"
 
-extern void genworld_pll(int argc, char **argv);
+extern void genworld_pll(int numFaults);

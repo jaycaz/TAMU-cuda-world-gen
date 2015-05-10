@@ -6,39 +6,30 @@
 
 #include "stats.h"
 #include "worldgen_seq.h"
-//#include "worldgen_pll.cuh"
+#include "worldgen_pll.cuh"
+#include "test.h"
 
 extern void genworld_pll(int argc, char **argv);
 
 int main(int argc, char **argv)
 {
+	int numFaults = 500000;
+	int numTrials = 1;
+
 	// ********* SEQUENTIAL ********** //
-	// Begin timing for sequential algorithm
-	LARGE_INTEGER seq_start, seq_end;
-	QueryPerformanceCounter(&seq_start);
-
 	// Run sequential generation algorithm
-	genworld_seq(argc, argv);
-
-	// Get total algorithm time
-	QueryPerformanceCounter(&seq_end);
-	seq_total_usec = get_elapsed_usec(seq_start, seq_end);
-
-	print_seq_stats();
+	printf("Running sequential algorithm with %d trials...", numTrials);
+	//run_seq_trials(numTrials, numFaults);
+	printf("done.\n");
 
 
 	// ********* PARALLEL ********** //
-	// Begin timing for parallel algorithm
-	LARGE_INTEGER pll_start, pll_end;
-	QueryPerformanceCounter(&pll_start);
-
 	// Run parallel generation algorithm
-	genworld_pll(argc, argv);
+	printf("Running parallel algorithm with %d trials...", numTrials);
+	run_pll_trials(numTrials, numFaults);
+	printf("done.\n");
 
-	// Get total algorithm time
-	QueryPerformanceCounter(&pll_end);
-	pll_total_usec = get_elapsed_usec(pll_start, pll_end);
-
+	print_seq_stats();
 	print_pll_stats();
 
 	cudaError_t cudaStatus = cudaDeviceReset();
