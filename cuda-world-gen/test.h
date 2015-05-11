@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <string.h>
+
 #include "worldgen_seq.h"
 #include "worldgen_pll.cuh"
 

@@ -14,7 +14,7 @@
 int main(int argc, char **argv)
 {
 	int faults[5] = { 200, 2000, 20000, 200000, 2000000 };
-	int trials[5] = { 1, 1, 1, 1, 1 };
+	int trials[5] = { 50, 40, 30, 20, 10 };
 
 	collect_seq_data(5, trials, faults);
 	collect_pll_data(5, trials, faults);

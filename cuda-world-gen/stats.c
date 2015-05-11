@@ -94,8 +94,8 @@ char* pll_headers()
 
 char* seq_data(int numFaults)
 {
-	char *data = (char*)malloc(128);
-	sprintf(data, "%d, %ld, %ld, %ld, %ld, %ld\n", 
+	char *data = (char*)malloc(256);
+	sprintf_s(data, 256, "%d, %ld, %ld, %ld, %ld, %ld\n", 
 			numFaults,
 			seq_total_usec,
 			seq_comp_usec,
@@ -107,8 +107,8 @@ char* seq_data(int numFaults)
  
 char* pll_data(int numFaults)
 {
-	char *data = (char*)malloc(128);
-	sprintf(data, "%d, %ld, %ld, %ld, %ld, %ld\n", 
+	char *data = (char*)malloc(256);
+	sprintf_s(data, 256, "%d, %ld, %ld, %ld, %ld, %ld\n", 
 			numFaults,
 			pll_total_usec,
 			pll_comp_usec,
