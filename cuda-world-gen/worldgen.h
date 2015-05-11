@@ -30,7 +30,7 @@
 #define MAX_RAND  0x7FFFFFFF
 #endif
 
-#define DEFAULT_NUM_FAULTS 2000
+//#define DEFAULT_NUM_FAULTS 2000
 
 // Global Variables
 int             *WorldMapArray;

@@ -8,6 +8,9 @@
 #include "worldgen_seq.h"
 #include "worldgen_pll.cuh"
 
+#define DEFAULT_NUM_FAULTS 5000
+#define DEFAULT_NUM_TRIALS 25
+
 // Print average times over a certain number of trials
 void run_seq_trials(int numTrials, int numFaults);
 void run_pll_trials(int numTrials, int numFaults);

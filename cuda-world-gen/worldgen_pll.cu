@@ -331,11 +331,13 @@ void GenerateWorldMapPll(unsigned seed, int numFaults)
 	//CURAND_CALL(curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT)); 
 	CURAND_CALL(curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT)); 
 	// Set ordering (for increased performance)
-	CURAND_CALL(curandSetGeneratorOrdering(gen, CURAND_ORDERING_PSEUDO_SEEDED));
+	//CURAND_CALL(curandSetGeneratorOrdering(gen, CURAND_ORDERING_PSEUDO_SEEDED));
 	// Set seed
 	CURAND_CALL(curandSetPseudoRandomGeneratorSeed(gen, seed)); 
 	// Generate n floats on device
 	CURAND_CALL(curandGenerateUniform(gen, d_rands, numRands));
+
+	cudaDeviceSynchronize();
 
 	// End RNG timing
 	QueryPerformanceCounter(&rng_end_time);
