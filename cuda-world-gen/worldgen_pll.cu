@@ -345,16 +345,13 @@ void GenerateWorldMapPll(unsigned seed, int numFaults)
 	QueryPerformanceCounter(&comp_start);
 
 	// ***** Call kernel ******
-	int curBlock = 0;
-	while (curBlock < numBlocks)
+	int curBlock;
+	int runBlocks = min(numBlocks, CUDA_MAX_BLOCKS);
+	for (curBlock = 0; curBlock < numBlocks; curBlock += runBlocks)
 	{
-		int runBlocks = min(numBlocks, CUDA_MAX_BLOCKS);
 		GenCUDA<<<runBlocks, threadsPerBlock>>>(d_WorldMapArray, d_SinIterPhi, d_XRange, d_YRange, d_rands);
-		cudaError_t status = cudaDeviceSynchronize();
-		curBlock += runBlocks;
-		//printf("Generation: %d\n", i);
 	}
-	//printf("Status: %d\n", status);
+	cudaError_t status = cudaDeviceSynchronize();
 
 	// End Comp timing
 	QueryPerformanceCounter(&comp_end);
@@ -379,7 +376,7 @@ __global__ void GenCUDA(int *WorldMapArray, float *SinIterPhi, int *XRange, int 
 	int			  Theta;
 
 	// Calculate which Phi thread should take care of
-	int idx = threadIdx.x + (blockIdx.x * blockDim.x);
+	//int idx = threadIdx.x + (blockIdx.x * blockDim.x);
 	Phi = threadIdx.x;
 	//printf("Phi = %d + (%d * %d)\n", threadIdx.x, blockIdx.x, blockDim.x);
 	//printf("Thread id: (%d, %d, %d)\n", threadIdx.x, threadIdx.y, threadIdx.z);
@@ -387,17 +384,17 @@ __global__ void GenCUDA(int *WorldMapArray, float *SinIterPhi, int *XRange, int 
 	if (Phi == 0)
 	{
 		// Extract random values
-		float rand[3];
-		rand[0] = rands[blockIdx.x * 3];
-		rand[1] = rands[blockIdx.x * 3 + 1];
-		rand[2] = rands[blockIdx.x * 3 + 2];
+		//float rand[3];
+		//rand[0] = rands[blockIdx.x * 3];
+		//rand[1] = rands[blockIdx.x * 3 + 1];
+		//rand[2] = rands[blockIdx.x * 3 + 2];
 
-		flag1 = (int)(rand[0] + 0.5);
+		flag1 = (int)(rands[blockIdx.x * 3] + 0.5);
 
 		/* Create a random greatcircle...
 		* Start with an equator and rotate it */
-		Alpha = (rand[1] - 0.5)*PI; /* Rotate around x-axis */
-		Beta = (rand[2] - 0.5)*PI; /* Rotate around y-axis */
+		Alpha = (rands[blockIdx.x * 3 + 1] - 0.5)*PI; /* Rotate around x-axis */
+		Beta = (rands[blockIdx.x * 3 + 2] - 0.5)*PI; /* Rotate around y-axis */
 		//printf("(flag1, Alpha, Beta): (%u, %f, %f)\n", flag1, Alpha, Beta);
 
 		TanB = tan(acos(cos(Alpha)*cos(Beta)));
@@ -410,14 +407,14 @@ __global__ void GenCUDA(int *WorldMapArray, float *SinIterPhi, int *XRange, int 
 
 	//for (Phi = 0; Phi < XRange / 2; Phi++)
 	//{
-		float YRangeDivPI = (*YRange) / PI;
-		float YRangeDiv2 = (*YRange) / 2;
+		//float YRangeDivPI = (*YRange) / PI;
+		//float YRangeDiv2 = (*YRange) / 2;
 		//printf("pll (siniterphi, sin) = (%f, %f)\n", SinIterPhi[Xsi - Phi + (*XRange)], sin((Xsi - Phi) * 2 * PI / (*XRange)));
-		int row = (*YRange) * Phi;
+		//int row = (*YRange) * Phi;
 		//printf("pll_row: %d\n", row);
-		Theta = (int)(YRangeDivPI*atan(SinIterPhi[Xsi - Phi + (*XRange)] * TanB)) + YRangeDiv2;
+		Theta = (int)(((*YRange) / 2) * atan(SinIterPhi[Xsi - Phi + (*XRange)] * TanB)) + ((*YRange) / 2);
 		//printf("Phi, sip, theta: %d, %f, %d\n", Phi, SinIterPhi[Xsi - Phi + (*XRange)], Theta);
-		wma_ptr = WorldMapArray + (row + Theta);
+		wma_ptr = WorldMapArray + ((*YRange) * Phi + Theta);
 
 		atomicCAS(wma_ptr, INT_MIN, 0);
 		if (flag1)
