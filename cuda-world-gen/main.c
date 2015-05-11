@@ -9,10 +9,17 @@
 #include "worldgen_pll.cuh"
 #include "test.h"
 
-extern void genworld_pll(int argc, char **argv);
+//extern void genworld_pll(int argc, char **argv);
 
 int main(int argc, char **argv)
 {
+	int faults[5] = { 200, 2000, 20000, 200000, 2000000 };
+	int trials[5] = { 1, 1, 1, 1, 1 };
+
+	collect_seq_data(5, trials, faults);
+	collect_pll_data(5, trials, faults);
+
+	/*
 	int numFaults = 500000;
 	int numTrials = 1;
 
@@ -31,6 +38,7 @@ int main(int argc, char **argv)
 
 	print_seq_stats();
 	print_pll_stats();
+	*/
 
 	cudaError_t cudaStatus = cudaDeviceReset();
     if (cudaStatus != cudaSuccess) {
@@ -43,6 +51,6 @@ int main(int argc, char **argv)
 	free(WorldMapArray);
 
 	printf("Press Enter to continue...");
-	getchar();
+	//getchar();
 	return 0;
 }

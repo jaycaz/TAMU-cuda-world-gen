@@ -19,8 +19,19 @@ extern long pll_comp_usec;
 extern long pll_color_usec;
 extern long pll_gif_usec;
 
+// Reset times
+void reset_seq_times();
+void reset_pll_times();
+
 // Given start and end time, in ticks, give output, in microseconds
 long get_elapsed_usec(LARGE_INTEGER start, LARGE_INTEGER end);
 
+// Print verbose timing stats, for debugging
 void print_seq_stats();
 void print_pll_stats();
+
+// Compact stats strings for storage in csv
+char* seq_headers();
+char* pll_headers();
+char* seq_data(int numFaults);
+char* pll_data(int numFaults);

@@ -37,6 +37,7 @@ extern "C" void genworld_pll(int numFaults)
 	QueryPerformanceCounter(&pll_start);
 
 	init_worldgen();
+	reset_pll_times();
 
 	if (WorldMapArray == NULL)
 	{

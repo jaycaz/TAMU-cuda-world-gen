@@ -40,6 +40,24 @@ long get_elapsed_usec(LARGE_INTEGER start, LARGE_INTEGER end)
 	return elapsedusec;
 }
 
+void reset_seq_times()
+{
+	seq_total_usec = 0;
+	seq_rng_usec = 0;
+	seq_comp_usec = 0;
+	seq_color_usec = 0;
+	seq_gif_usec = 0;
+}
+
+void reset_pll_times()
+{
+	pll_total_usec = 0;
+	pll_rng_usec = 0;
+	pll_comp_usec = 0;
+	pll_color_usec = 0;
+	pll_gif_usec = 0;
+}
+
 void print_seq_stats()
 {
 	printf("\nSequential Algorithm Statistics:\n");
@@ -60,4 +78,42 @@ void print_pll_stats()
 	printf("\t- Color time: %ld usec\n", pll_color_usec);
 	printf("\t- GIF time: %ld usec\n", pll_gif_usec);
 	printf("\n");
+}
+
+char* seq_headers()
+{
+	char *headers = (char*)malloc(128);
+	sprintf(headers, "# Faults, Total time, Elev. Comp., RNG, Color, GIF\n");
+	return headers;
+}
+
+char* pll_headers()
+{
+	return seq_headers();
+}
+
+char* seq_data(int numFaults)
+{
+	char *data = (char*)malloc(128);
+	sprintf(data, "%d, %ld, %ld, %ld, %ld, %ld\n", 
+			numFaults,
+			seq_total_usec,
+			seq_comp_usec,
+			seq_rng_usec,
+			seq_color_usec,
+			seq_gif_usec);
+	return data;
+}
+ 
+char* pll_data(int numFaults)
+{
+	char *data = (char*)malloc(128);
+	sprintf(data, "%d, %ld, %ld, %ld, %ld, %ld\n", 
+			numFaults,
+			pll_total_usec,
+			pll_comp_usec,
+			pll_rng_usec,
+			pll_color_usec,
+			pll_gif_usec);
+	return data;
 }
