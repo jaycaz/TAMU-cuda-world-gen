@@ -13,11 +13,14 @@
 
 int main(int argc, char **argv)
 {
-	int faults[5] = { 200, 2000, 20000, 200000, 2000000 };
-	int trials[5] = { 50, 40, 30, 20, 10 };
+	int seq_faults[10] = { 200, 700, 2000, 7000, 20000, 70000, 200000, 700000, 2000000, 7000000 };
+	int seq_trials[10] = { 50, 50, 50, 50, 30, 30, 10, 10, 5, 5 };
 
-	collect_seq_data(5, trials, faults);
-	collect_pll_data(5, trials, faults);
+	int pll_faults[10] = { 200, 700, 2000, 7000, 20000, 70000, 200000, 700000, 2000000, 7000000 };
+	int pll_trials[10] = { 50, 50, 50, 50, 30, 30, 10, 10, 5, 5 };
+
+	collect_seq_data(10, seq_trials, seq_faults);
+	collect_pll_data(10, pll_trials, pll_faults);
 
 	/*
 	int numFaults = 500000;
